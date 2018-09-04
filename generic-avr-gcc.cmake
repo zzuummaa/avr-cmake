@@ -11,12 +11,16 @@
 set(AVR_CFLAGS "-ffunction-sections -fdata-sections" CACHE STRING "AVR compilation flags")
 set(AVR_LFLAGS "-Wl,--relax,--gc-sections" CACHE STRING "AVR link flags")
 
+set(AVR_TOOLS_DIR ${Arduino_ROOT_DIR}/hardware/tools/avr/bin)
+
 #find toolchain programs
-find_program(AVR-GCC avr-gcc)
-find_program(AVR-GXX avr-g++)
-find_program(AVR-OBJCOPY avr-objcopy)
-find_program(AVR-SIZE avr-size)
-find_program(AVRDUDE avrdude)
+find_program(AVR-GCC avr-gcc PATHS ${AVR_TOOLS_DIR})
+find_program(AVR-GXX avr-g++ PATHS ${AVR_TOOLS_DIR})
+find_program(AVR-OBJCOPY avr-objcopy PATHS ${AVR_TOOLS_DIR})
+find_program(AVR-SIZE avr-size PATHS ${AVR_TOOLS_DIR})
+find_program(AVRDUDE avrdude PATHS ${AVR_TOOLS_DIR})
+
+message("-- AVR-OBJCOPY: ${AVR-OBJCOPY}")
 
 #define toolchain
 set(CMAKE_SYSTEM_NAME Generic)
@@ -72,24 +76,27 @@ endfunction(avr_add_executable_compilation)
 
 function(avr_add_executable_upload ${EXECUTABLE})
 	set(AVR_PROGRAMMER_OPTIONS "")
-	
-	if(AVR_PROGRAMMER_BAUDRATE)
-		set(AVR_PROGRAMMER_OPTIONS ${AVR_PROGRAMMER_OPTIONS} -b ${AVR_PROGRAMMER_BAUDRATE})
-	endif(AVR_PROGRAMMER_BAUDRATE)
-	
+	set(AVRDUDE_CONF "\"C:/Program Files (x86)/Arduino/hardware/tools/avr/etc/avrdude.conf\"")
+
 	if(AVR_PROGRAMMER_PORT)
-		set(AVR_PROGRAMMER_OPTIONS ${AVR_PROGRAMMER_OPTIONS} -P ${AVR_PROGRAMMER_PORT})
+		set(AVR_PROGRAMMER_OPTIONS "-P\"${AVR_PROGRAMMER_PORT}\"")
 	endif(AVR_PROGRAMMER_PORT)
+
+	if(AVR_PROGRAMMER_BAUDRATE)
+		set(AVR_PROGRAMMER_OPTIONS "${AVR_PROGRAMMER_OPTIONS} -b${AVR_PROGRAMMER_BAUDRATE}")
+	endif(AVR_PROGRAMMER_BAUDRATE)
 	
 	# upload target
 	if(PROGRAM_EEPROM)
 		add_custom_target(upload_${EXECUTABLE} 
-			COMMAND ${AVRDUDE} -p ${AVR_MCU} -c ${AVR_PROGRAMMER} ${AVR_PROGRAMMER_OPTIONS} -U flash:w:${EXECUTABLE}.hex -U eeprom:w:${EXECUTABLE}_eeprom.hex
-			DEPENDS ${EXECUTABLE})
+			COMMAND ${AVRDUDE} -C${AVRDUDE_CONF} -p${AVR_MCU} -c${AVR_PROGRAMMER} ${AVR_PROGRAMMER_OPTIONS} -Uflash:w:${EXECUTABLE}.hex -Ueeprom:w:${EXECUTABLE}_eeprom.hex
+			DEPENDS ${EXECUTABLE}
+			COMMENT "${AVRDUDE} -C${AVRDUDE_CONF} -p${AVR_MCU} -c${AVR_PROGRAMMER} ${AVR_PROGRAMMER_OPTIONS} -Uflash:w:${EXECUTABLE}.hex -Ueeprom:w:${EXECUTABLE}_eeprom.hex")
 	else(PROGRAM_EEPROM)
 		add_custom_target(upload_${EXECUTABLE} 
-			COMMAND ${AVRDUDE} -p ${AVR_MCU} -c ${AVR_PROGRAMMER} ${AVR_PROGRAMMER_OPTIONS} -U flash:w:${EXECUTABLE}.hex
-			DEPENDS ${EXECUTABLE})
+			COMMAND ${AVRDUDE} -C${AVRDUDE_CONF} -p${AVR_MCU} -c${AVR_PROGRAMMER} ${AVR_PROGRAMMER_OPTIONS} -Uflash:w:${EXECUTABLE}.hex
+			DEPENDS ${EXECUTABLE}
+			COMMENT "${AVRDUDE} -C${AVRDUDE_CONF} -p${AVR_MCU} -c${AVR_PROGRAMMER} ${AVR_PROGRAMMER_OPTIONS} -Uflash:w:${EXECUTABLE}.hex")
 	endif(PROGRAM_EEPROM)
 endfunction(avr_add_executable_upload)
 

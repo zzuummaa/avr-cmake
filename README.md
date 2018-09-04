@@ -19,3 +19,15 @@ $ make upload_example_arduino #upload to arduino
 You may need to edit CMakeLists.txt if you use another arduino than Uno or if it use another port than /dev/ttyACM0.
 The arduino LED should blink once per second if everything went right.
 
+I set additional cmake option for CLion on Windows:
+
+```sh
+-D "Arduino_ROOT_DIR=C:/Program Files (x86)/Arduino"
+```
+
+And choose AVR compilers:
+
+```sh
+-D CMAKE_C_COMPILER="C:/Program Files (x86)/Arduino/hardware/tools/avr/bin/avr-gcc.exe"
+-D CMAKE_CXX_COMPILER="C:/Program Files (x86)/Arduino/hardware/tools/avr/bin/avr-g++.exe"
+```
